@@ -39,3 +39,39 @@ func dbConnect(dsName, dbName string) (*gorm.DB, error) {
 
 	return db, nil
 }
+
+func (r *ormRepo) Create(user *user.User) (*user.User, error) {
+	result := r.db.Create(&user)
+	return user, result.Error
+}
+
+func (r *ormRepo) GetByID(id uint) (*user.User, error) {
+	var user user.User
+	result := r.db.Take(&user, id)
+	return &user, result.Error
+}
+
+func (r *ormRepo) GetByEmail(email string) (*user.User, error) {
+	var user user.User
+	result := r.db.Take(&user, "email = ?", email)
+	return &user, result.Error
+}
+
+func (r *ormRepo) GetAll() ([]*user.User, error) {
+	users := []*user.User{}
+	result := r.db.Find(&users)
+	return users, result.Error
+}
+
+func (r *ormRepo) Update(user *user.User) (*user.User, error) {
+	result := r.db.Model(&user).Updates(user)
+	if result.Error == nil {
+		r.db.Model(&user).Updates(map[string]interface{}{"is_active": user.IsActive})
+	}
+	return user, result.Error
+}
+
+func (r *ormRepo) Delete(user *user.User) error {
+	result := r.db.Delete(&user)
+	return result.Error
+}
