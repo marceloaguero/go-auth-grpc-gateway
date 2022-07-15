@@ -116,20 +116,95 @@ func (u *usecase) Update(user *User) (*User, error) {
 	}
 
 	// Verify password
+	if len(user.Password) > 0 {
+		if len(user.Password) < minPasswordLength {
+			return nil, errors.BadRequest.Newf("password must have at least %d characters", minPasswordLength)
+		}
+	}
 
+	hash, err := u.passwordSvc.Hash(user.Password)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't obtain password hash")
+	}
+	user.Hash = hash
+
+	validate = validator.New()
+	if err := validate.Struct(user); err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		return nil, errors.BadRequest.Wrap(validationErrors, "error during user data validation")
+	}
+
+	formerUser, err = u.GetByID(user.ID)
+	if err != nil {
+		return nil, errors.Wrap(err, "user with id %d does not exist", user.ID)
+	}
+
+	user, err = u.repository.Update(user)
+	if err != nil {
+		return nil, errors.Wrap(err, "error updating user")
+	}
+
+	return user, nil
 }
 
 // Delete a user
 func (u *usecase) Delete(user *User) error {
+	formerUser := &User{}
+	formerUser, err := u.GetByID(user.ID)
+	if err != nil {
+		return errors.BadRequest.Wrapf(err, "user with id %d does not exist", user.ID)
+	}
+
+	if err := u.repository.Delete(user); err != nil {
+		return errors.Wrap(err, "error deleting user")
+	}
+
 	return nil
 }
 
 // Login validates a user by email/password
 func (u *usecase) Login(email, password string) (*User, error) {
-	return nil, nil
+	user, err := u.GetByEmail(email)
+	if err != nil {
+		return nil, errors.Unauthorized.Wrap(err, "wrong user email")
+	}
+
+	passwordSvc := pass.NewService()
+	err = passwordSvc.CheckPassword(password, user.Hash)
+	if err != nil {
+		return nil, errors.Unauthorized.Wrap(err, "bad password")
+	}
+
+	return user, nil
 }
 
 // ChangePassword permits that a user can change her password
 func (u *usecase) ChangePassword(id uint, oldPassword, newPassword string) (*User, error) {
-	return nil, nil
+	user, err := u.GetByID(id)
+	if err != nil {
+		return nil, errors.BadRequest.Wrapf(err, "user with id %d does not exist", id)
+	}
+
+	// Verify current password
+	passwordSvc := pass.NewService()
+	err = passwordSvc.CheckPassword(oldPassword, user.Hash)
+	if err != nil {
+		return nil, errors.Unauthorized.Wrapf(err, "bad current password")
+	}
+
+	// Verify new password length
+	if len(newPassword) < minPasswordLength {
+		return nil, errors.BadRequest.Newf("new password must have at least %d characters", minPasswordLength)
+	}
+
+	hash, err := u.passwordSvc.Hash(newPassword)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't obtain new passwors hash")
+	}
+
+	user.Password = newPassword
+	user.Hash = hash
+	_, err = u.Update(user)
+
+	return user, err
 }
