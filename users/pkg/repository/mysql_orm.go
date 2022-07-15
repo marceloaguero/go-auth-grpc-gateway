@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/BetuelSA/go-helpers/errors"
+	"github.com/marceloaguero/go-auth-grpc-gateway/users/pkg/user"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
