@@ -2,6 +2,7 @@ package user
 
 // User describes a user in the system
 type User struct {
+	ID       uint   `gorm:"primaryKey"`
 	Surname  string `gorm:"size:60" validate:"required,gte=2,lte=60"`
 	Name     string `gorm:"size:60" validate:"lte=60"`
 	Email    string `gorm:"size=60,unique" validate:"email,required"`

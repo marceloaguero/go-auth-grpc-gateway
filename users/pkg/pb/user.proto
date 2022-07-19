@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./pkg/pb";
+
+import "google/protobuf/empty.proto";
+
+service UserService {
+    rpc Create(CreateRequest) returns (CreateResponse) {}
+    rpc GetByID(GetByIDRequest) returns (GetByIDResponse) {}
+    rpc GetByEmail(GetByEmailRequest) returns (GetByEmailResponse) {}
+    rpc GetAll(google.protobuf.Empty) returns (GetAllResponse) {}
+    rpc Update(UpdateRequest) returns (UpdateResponse) {}
+    rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+    rpc Login(LoginRequest) returns (LoginResponse) {}
+    rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {}
+}
+
+message GenericResponse {
+    uint32 code = 1;
+    string mess = 2;
+}
+
+message User {
+    uint64 id = 1;
+    string surname = 2;
+    string name = 3;
+    string email = 4;
+    string password = 5;
+    string hash = 6;
+    bool is_active = 7;
+}
+
+message CreateRequest {
+    User user = 1;
+}
+
+message CreateResponse {
+    GenericResponse resp = 1;
+    User user = 2;
+}
+
+message GetByIDRequest {
+    uint64 id = 1;
+}
+
+message GetByIDResponse {
+    GenericResponse resp = 1;
+    User user = 2;
+}
+
+message GetByEmailRequest {
+    string email = 1;
+}
+
+message GetByEmailResponse {
+    GenericResponse resp = 1;
+    User user = 2;
+}
+
+message GetAllResponse {
+    GenericResponse resp = 1;
+    repeated User users = 2;
+}
+
+message UpdateRequest {
+    User user = 1;
+}
+
+message UpdateResponse {
+    GenericResponse resp = 1;
+    User user = 2;
+}
+
+message DeleteRequest {
+    User user = 1;
+}
+
+message DeleteResponse {
+    GenericResponse resp = 1;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    GenericResponse resp = 1;
+    User user = 2;
+}
+
+message ChangePasswordRequest {
+    uint64 id = 1;
+    string old_password = 2;
+    string new_password = 3;
+}
+
+message ChangePasswordResponse {
+    GenericResponse resp = 1;
+    User user = 2;
+}
